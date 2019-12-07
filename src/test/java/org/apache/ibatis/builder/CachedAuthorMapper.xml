@@ -22,7 +22,10 @@
 
 <mapper namespace="org.apache.ibatis.builder.CachedAuthorMapper">
 
-  <cache readOnly="true"/>
+  <cache readOnly="true" type="" blocking="" eviction="" flushInterval="" size=""/>
+
+  <!--在 MyBatis 中，二级缓存是可以共用的。这需要通过<cache-ref>节点为命名空间配置参 照缓存-->
+  <cache-ref namespace="name" />
 
   <select id="selectAllAuthors"
           resultType="org.apache.ibatis.domain.blog.Author">

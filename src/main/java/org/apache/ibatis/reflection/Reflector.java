@@ -145,16 +145,22 @@ public class Reflector {
 
     private void addSetMethods(Class<?> cls) {
         Map<String, List<Method>> conflictingSetters = new HashMap<>();
+        // 获取当前类，接口，以及父类中的方法
         Method[] methods = getClassMethods(cls);
         for (Method method : methods) {
             String name = method.getName();
+            // 过滤出 setter 方法，且方法仅有一个参数
             if (name.startsWith("set") && name.length() > 3) {
                 if (method.getParameterTypes().length == 1) {
                     name = PropertyNamer.methodToProperty(name);
+                    // setter 方法发生冲突原因是:可能存在重载情况，比如:
+                    // void setSex(int sex);
+                    // void setSex(SexEnum sex);
                     addMethodConflict(conflictingSetters, name, method);
                 }
             }
         }
+        // 解决 setter 冲突
         resolveSetterConflicts(conflictingSetters);
     }
 
@@ -166,18 +172,25 @@ public class Reflector {
     private void resolveSetterConflicts(Map<String, List<Method>> conflictingSetters) {
         for (String propName : conflictingSetters.keySet()) {
             List<Method> setters = conflictingSetters.get(propName);
+            /*
+             * 获取 getter 方法的返回值类型，由于 getter 方法不存在重载的情况，
+             * 所以可以用它的返回值类型反推哪个 setter 的更为合适
+             */
             Class<?> getterType = getTypes.get(propName);
             Method match = null;
             ReflectionException exception = null;
             for (Method setter : setters) {
+                // 获取参数类型
                 Class<?> paramType = setter.getParameterTypes()[0];
                 if (paramType.equals(getterType)) {
                     // should be the best match
+                    // 参数类型和返回类型一致，则认为是最好的选择，并结束循环
                     match = setter;
                     break;
                 }
                 if (exception == null) {
                     try {
+                        // 选择一个更为合适的方法
                         match = pickBetterSetter(match, setter, propName);
                     } catch (ReflectionException e) {
                         // there could still be the 'best match'
@@ -186,25 +199,33 @@ public class Reflector {
                     }
                 }
             }
+            // 若 match 为空，表示没找到更为合适的方法，此时抛出异常
             if (match == null) {
                 throw exception;
             } else {
+                // 将筛选出的方法放入 setMethods 中，并将方法参数值添加到 setTypes 中
                 addSetMethod(propName, match);
             }
         }
     }
 
+    /**
+     * 从两个 setter 方法中选择一个更为合适方法
+     */
     private Method pickBetterSetter(Method setter1, Method setter2, String property) {
         if (setter1 == null) {
             return setter2;
         }
         Class<?> paramType1 = setter1.getParameterTypes()[0];
         Class<?> paramType2 = setter2.getParameterTypes()[0];
+        // 如果参数 2 可赋值给参数 1，即参数 2 是参数 1 的子类，
+        // 则认为参数 2 对应的 setter 方法更为合适
         if (paramType1.isAssignableFrom(paramType2)) {
             return setter2;
         } else if (paramType2.isAssignableFrom(paramType1)) {
             return setter1;
         }
+        // 两种参数类型不相关，这里抛出异常
         throw new ReflectionException("Ambiguous setters defined for property '" + property + "' in class '"
                 + setter2.getDeclaringClass() + "' with types '" + paramType1.getName() + "' and '"
                 + paramType2.getName() + "'.");
@@ -213,7 +234,9 @@ public class Reflector {
     private void addSetMethod(String name, Method method) {
         if (isValidPropertyName(name)) {
             setMethods.put(name, new MethodInvoker(method));
+            // 解析参数类型列表
             Type[] paramTypes = TypeParameterResolver.resolveParamTypes(method, type);
+            // 将参数类型由 Type 转为 Class，并将转换后的结果缓存到 setTypes
             setTypes.put(name, typeToClass(paramTypes[0]));
         }
     }

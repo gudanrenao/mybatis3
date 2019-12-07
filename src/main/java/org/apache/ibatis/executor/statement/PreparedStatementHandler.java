@@ -68,7 +68,9 @@ public class PreparedStatementHandler extends BaseStatementHandler {
   @Override
   public <E> Cursor<E> queryCursor(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
+    // 执行 SQL
     ps.execute();
+    // 处理执行结果
     return resultSetHandler.handleCursorResultSets(ps);
   }
 

@@ -16,6 +16,7 @@
 package org.apache.ibatis.executor;
 
 /**
+ * 用ThreadLocal保存Error信息
  * @author Clinton Begin
  */
 public class ErrorContext {

@@ -16,6 +16,7 @@
 package org.apache.ibatis.mapping;
 
 /**
+ * sql类型 curd flush (UNKNOWN后续执行sql会报异常)
  * @author Clinton Begin
  */
 public enum SqlCommandType {

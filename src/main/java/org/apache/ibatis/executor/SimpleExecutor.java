@@ -53,6 +53,17 @@ public class SimpleExecutor extends BaseExecutor {
     }
   }
 
+  /**
+   * 真正的数据库查询方法
+   * @param ms
+   * @param parameter
+   * @param rowBounds
+   * @param resultHandler
+   * @param boundSql
+   * @param <E>
+   * @return
+   * @throws SQLException
+   */
   @Override
   public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Statement stmt = null;
@@ -69,9 +80,12 @@ public class SimpleExecutor extends BaseExecutor {
   @Override
   protected <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql) throws SQLException {
     Configuration configuration = ms.getConfiguration();
+      // 创建 StatementHandler
     StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, null, boundSql);
+      // 创建 StatementHandler
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
     stmt.closeOnCompletion();
+      // 执行查询操作
     return handler.queryCursor(stmt);
   }
 
