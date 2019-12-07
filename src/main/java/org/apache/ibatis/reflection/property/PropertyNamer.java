@@ -20,6 +20,7 @@ import java.util.Locale;
 import org.apache.ibatis.reflection.ReflectionException;
 
 /**
+ * 将字符串转化为字段名，如去除is/get/set前缀,将去除前缀后的字符串的首字母小写
  * @author Clinton Begin
  */
 public final class PropertyNamer {
